@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/all.js"
+        integrity="sha384-xymdQtn1n3lH2wcu0qhcdaOpQwyoarkgLVxC/wZ5q7h9gHtxICrpcaSUfygqZGOe"
+        crossorigin="anonymous"></script>
+    <link href="../css/Login.css" rel="stylesheet" type="text/css" />
+
+    <!-- Plugin file -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="loginBox rounded bg-white">
+        <h3>Medi Connect Pro</h3>
+        <form>
+            <div class="inputBox">
+                <input id="correo" type="text" name="correo" placeholder="Ingresa tu correo">
+                <input id="contrasena" type="password" name="contrasena" placeholder="Ingresa tu contrasena">
+            </div>
+            <input type="button" id="btnLogin" name="btnLogin" value="Ingresar">
+        </form>
+        <a href="#" style="color: #9f6cd2;">¿OLVIDO SU CONTRASEÑA?<br> </a>
+        <div class="text-center">
+            <a href="Registro.html" style="color: #9f6cd2;">REGISTRARSE </a>
+        </div>
+
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        sessionStorage.clear();
+        $("#btnLogin").on('click', function () {
+            Login();
+        });
+    });
+
+    function Login() {
+        if ($("#correo").val() == '') {
+            alert('Digite correo')
+            return;
+        }
+        if ($("#contrasena").val() == '') {
+            alert('Digite contraseña')
+            return;
+        }
+        var formData = {
+            correo: $("#correo").val(),
+            contrasena: $("#contrasena").val()
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/Auth/Login",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            headers: {
+                "accept": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            },
+            success: function (responseData) {
+                if (responseData.length == 0) {
+                    alert('No se encontró usuario')
+                    return;
+                }
+                sessionStorage.setItem("nombre",responseData[0].nombre)
+                sessionStorage.setItem("documento",responseData[0].documento)
+                sessionStorage.setItem("perfil",responseData[0].perfil)
+                sessionStorage.setItem("tk",responseData[0].token)
+                sessionStorage.setItem("idperfil",responseData[0].perfilId)
+                sessionStorage.setItem("id",responseData[0].objectId)
+                window.location.href ="Home.html"
+            },
+            error: function (responseData) {
+                alert(responseData.responseText);
+            }
+        });
+    }
+</script>
+
+</html>
