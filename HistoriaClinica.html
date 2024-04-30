@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Citas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet" type="text/css" />
+
+    <!-- Plugin file -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="wrapper rounded bg-white">
+        <div class="h3 rowTotal d-flex justify-content-between px-4">
+            <div class="mb-1 text-left">
+                <strong>
+                    <p id="nameU" class="navbar-brand"></p>
+                </strong>
+            </div>
+            <div class="mb-1 text-right">
+                <a href="NuevaCita.html" class="text-primary" id="btnNew"><span class='btn-label'>
+                        <i class='fa fa-plus'></i> </span></a>
+                <a href="Home.html" class="text-danger"><span class='btn-label'> <i class='fa fa-home'></i> </span></a>
+                <a href="Login.html" class="text-secondary"><span class='btn-label'> <i class='fa fa-sign-out'></i>
+                    </span></a>
+            </div>
+        </div>
+        <br>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="row mt-3">
+                <div class="col-12 table-responsive">
+                    <table id="tblHistorias" class="table table-borderless">
+                        <thead>
+                            <caption>Estas son tus historias clinicas!</caption>
+                            <tr class="bg-light">
+                                <th class='hide'>id</th>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Medico</th>
+                                <th>Historia Clinica</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        const valL = sessionStorage.getItem("tk");
+        if (valL == null || valL == undefined) {
+            window.location.href = "Login.html"
+            return;
+        }
+        const perfil = sessionStorage.getItem("idperfil").toUpperCase();
+        if (perfil == '37058450-91CE-46D2-B090-DECC916293CC') {
+            LoadHistorias();
+        }
+        const elem = document.getElementById("nameU")
+        elem.innerHTML = 'Bienvenido, ' + sessionStorage.getItem("nombre");
+    });
+    function LoadHistorias() {
+        var formData = {
+            pacienteId: sessionStorage.getItem("id"),
+            estadoCita: 3
+        };
+        const tk = 'Bearer ' + sessionStorage.getItem("tk");
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/TraerCita",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            beforeSend: function (request) {
+                request.withCredentials = true;
+                request.setRequestHeader("Authorization", tk);
+            },
+            success: function (data) {
+                $.each(data, function (i, item) {
+                    const msg = item.estadoCita == 2 ? 'Asignada' : (item.estadoCita == 3 ? 'Realizada' : (item.estadoCita == 4 ? 'Cancelada' : 'Creada'));
+                    const date = new Date(item.fecha);
+                    const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+                    var row = "<tr>" +
+                        "<td class='hide guidtbl'>" + item.id + "</td>" +
+                        "<td>" + item.nombre + "</td>" +
+                        "<td>" + formattedDate + "</td>" +
+                        "<td>" + item.hora + "</td>" +
+                        "<td>" + item.medico + "</td>" +
+                        "<td>" + item.historiaClinica + "</td>";
+
+                    $("#tblHistorias>tbody").append(row);
+                });
+                const tb = $('#tblHistorias > tbody');
+                if (tb.length > 1) {
+                    tb[1].remove();
+                }
+
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        //Something bad happened
+                        break;
+                }
+            }
+        });
+    }
+</script>
+
+</html>

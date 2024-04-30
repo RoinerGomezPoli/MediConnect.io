@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Citas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet" type="text/css" />
+
+    <!-- Plugin file -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="wrapper rounded bg-white">
+        <div class="h3 rowTotal d-flex justify-content-between px-4">
+            <div class="mb-1 text-left">
+                <strong>
+                    <p id="nameU" class="navbar-brand"></p>
+                </strong>
+            </div>
+            <div class="mb-1 text-right">
+                <a href="NuevaCita.html" class="text-primary" id="btnNew"><span class='btn-label'>
+                        <i class='fa fa-plus'></i> </span></a>
+                <a href="Home.html" class="text-danger"><span class='btn-label'> <i
+                            class='fa fa-home'></i> </span></a>
+                <a href="Login.html" class="text-primary"><span class='btn-label'> <i
+                            class='fa fa-sign-out'></i> </span></a>
+            </div>
+        </div>
+        <br>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="row mt-3">
+                <div class="col-12 table-responsive">
+                    <table id="tblCitas" class="table table-borderless hide">
+                        <thead>
+                            <caption>Estas son tus citas!</caption>
+                            <tr class="bg-light">
+                                <th class='hide'>id</th>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Medico</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th>Opción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                    <table id="tblCitasMed" class="table table-borderless hide">
+                        <thead>
+                            <caption>Estas son tus citas!</caption>
+                            <tr class="bg-light">
+                                <th class='hide'>id</th>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Paciente</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th>Opción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalHis" tabindex="-1" role="dialog" aria-labelledby="modalHisLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Historia clinica</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row col-12">
+                        <label id="idHis" class="hide"></label>
+                        <textarea name="historiaClinica" id="historiaClinica" class="form-control" cols="30" rows="10"
+                            maxlength="600"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnGuardarHistoria" class="btn btn-primary">Guardar Historia</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        const valL = sessionStorage.getItem("tk");
+        if (valL == null || valL == undefined) {
+            window.location.href = "Login.html"
+            return;
+        }
+        const perfil = sessionStorage.getItem("idperfil").toUpperCase();
+        if (perfil == '37058450-91CE-46D2-B090-DECC916293CC') {
+            const tblCitas = document.getElementById("tblCitas");
+            tblCitas.classList.remove("hide");
+            LoadCitas();
+        }
+
+        if (perfil == '19DBFDD5-50CE-4AB4-BCFE-21118FBDE58B') {
+            const tblCitasMed = document.getElementById("tblCitasMed");
+            tblCitasMed.classList.remove("hide");
+            const btnNew = document.getElementById("btnNew");
+            btnNew.classList.add("hide");
+            LoadCitasM();
+        }
+        $("#tblCitasMed").on('click', '.clsCerrar', function () {
+            var currentRow = $(this).closest("tr");
+            var guid = currentRow.find(".guidtbl").html();
+            $('#modalHis').modal('show');
+            const idHis = document.getElementById("idHis")
+            idHis.innerHTML = guid;
+        });
+
+        $("#tblCitas").on('click', '.clsCancelarCit', function () {
+            var currentRow = $(this).closest("tr");
+            var nombre = currentRow.find(".nom").html();
+            if (confirm("Estas seguro de cancelar cita " + nombre + " ?") == true) {
+                var guid = currentRow.find(".guidtbl").html();
+                CancelarCita(guid)
+            }
+        });
+
+
+        $("#btnGuardarHistoria").click(function () {
+            GaurdarHistoriaClinica($("#idHis").text());
+        });
+        const elem = document.getElementById("nameU")
+        elem.innerHTML = 'Bienvenido, ' + sessionStorage.getItem("nombre");
+    });
+    function LoadCitas() {
+        var formData = {
+            pacienteId: sessionStorage.getItem("id")
+        };
+        const tk = 'Bearer ' + sessionStorage.getItem("tk");
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/TraerCita",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            beforeSend: function (request) {
+                request.withCredentials = true;
+                request.setRequestHeader("Authorization", tk);
+            },
+            success: function (data) {
+                $.each(data, function (i, item) {
+                    const msg = item.estadoCita == 2 ? 'Asignada' : (item.estadoCita == 3 ? 'Realizada' : (item.estadoCita == 4 ? 'Cancelada' : 'Creada'));
+                    const date = new Date(item.fecha);
+                    const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+                    const button = item.estadoCita != "3" ? "<td><button class='btn btnTable btn-labeled text-primary clsCancelarCit' data-toggle='tooltip' data-placement='top' title='Historia Clinica'><span class='btn-label'> <i class='fa fa-plus'></i> </span></button></td>" : "";
+                    var row = "<tr>" +
+                        "<td class='hide guidtbl'>" + item.id + "</td>" +
+                        "<td class='nom'>" + item.nombre + "</td>" +
+                        "<td>" + formattedDate + "</td>" +
+                        "<td>" + item.hora + "</td>" +
+                        "<td>" + item.medico + "</td>" +
+                        "<td>" + item.descripcion + "</td>" +
+                        "<td>" + msg + "</td>" +
+                        button;
+
+                    $("#tblCitas>tbody").append(row);
+                });
+                const tb = $('#tblCitas > tbody');
+                if (tb.length > 1) {
+                    tb[1].remove();
+                }
+
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        //Something bad happened
+                        break;
+                }
+            }
+        });
+    }
+    function LoadCitasM() {
+        var formData = {
+            medicoId: sessionStorage.getItem("id"),
+            estadoCita: 2
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/TraerCita",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            headers: {
+                "accept": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            },
+            success: function (data) {
+                $.each(data, function (i, item) {
+                    const msg = item.estadoCita == 2 ? 'Asignada' : (item.estadoCita == 3 ? 'Realizada' : (item.estadoCita == 4 ? 'Cancelada' : 'Creada'));
+                    const date = new Date(item.fecha);
+                    const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+                    var row = "<tr>" +
+                        "<td class='hide guidtbl'>" + item.id + "</td>" +
+                        "<td>" + item.nombre + "</td>" +
+                        "<td>" + formattedDate + "</td>" +
+                        "<td>" + item.hora + "</td>" +
+                        "<td>" + item.paciente + "</td>" +
+                        "<td>" + item.descripcion + "</td>" +
+                        "<td>" + msg + "</td>" +
+                        "<td><button class='btn btnTable btn-labeled text-primary clsCerrar' data-toggle='tooltip' data-placement='top' title='Historia Clinica'><span class='btn-label'> <i class='fa fa-plus'></i> </span></button></td>";
+                    $("#tblCitasMed>tbody").append(row);
+                });
+                const tb = $('#tblCitasMed > tbody');
+                if (tb.length > 1) {
+                    tb[1].remove();
+                }
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        //Something bad happened
+                        break;
+                }
+            },
+        });
+    }
+
+    function GaurdarHistoriaClinica(guidVal) {
+        if ($("#historiaClinica").val() == '') {
+            alert("Digite una historia clinica");
+            return;
+        }
+        var formData = {
+            id: guidVal,
+            estadoCita: 3,
+            historiaClinica: $("#historiaClinica").val()
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/GuardarActualizarCita",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            success: function (responseData) {
+                if (responseData > 0) {
+                    $('#modalHis').modal('toggle');
+                    $('#modalHis').modal('hide');
+                    location.reload();
+                } else {
+                    alert("No se pudo guardar información")
+                }
+            },
+            failure: function (responseData) {
+                alert(responseData.responseText);
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Ha ocurrido un error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        alert("Ha ocurrido un error interno");
+                        break;
+                }
+            }
+        });
+    }
+
+    function CancelarCita(guidVal) {
+        var formData = {
+            id: guidVal,
+            estadoCita: 4,
+            pacienteId: sessionStorage.getItem("id")
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/GuardarActualizarCita",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            success: function (responseData) {
+                if (responseData > 0) {
+                    location.reload();
+                } else {
+                    alert("No se pudo guardar información")
+                }
+            },
+            failure: function (responseData) {
+                alert(responseData.responseText);
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Ha ocurrido un error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        alert("Ha ocurrido un error interno");
+                        break;
+                }
+            }
+        });
+    }
+</script>
+
+</html>

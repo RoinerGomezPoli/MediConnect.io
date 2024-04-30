@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
+        rel="stylesheet" id="bootstrap-css">
+
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/all.js"
+        integrity="sha384-xymdQtn1n3lH2wcu0qhcdaOpQwyoarkgLVxC/wZ5q7h9gHtxICrpcaSUfygqZGOe"
+        crossorigin="anonymous"></script>
+    <link href="../css/Register.css" rel="stylesheet" type="text/css" />
+
+    <!-- Plugin file -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="container-fluid card contact-form">
+        <form class="form">
+            <h3>INGRESA TU INFORMACIÓN</h3>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <input type="text" name="documento" id="documento" class="form-control" required
+                            placeholder="Documento*" maxlength="20" />
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="nombre" id="nombre" class="form-control" required
+                            placeholder="Digite Nombre*" maxlength="50" />
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="apellido" id="apellido" class="form-control" required
+                            placeholder="Digite Apellido*" maxlength="50" />
+                    </div>
+                    <div class="form-group">
+                        <input type="date" name="fechanac" id="fechanac" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <input type="number" name="telefono" id="telefono" class="form-control"
+                            placeholder="Digite telefono*" maxlength="10" required />
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="direccion" id="direccion" class="form-control" required
+                            placeholder="Digite Dirección*" maxlength="200" />
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="correo" id="correo" class="form-control" required
+                            placeholder="Digite Correo*" maxlength="250" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <input type="button" name="btnRegistrarse" id="btnRegistrarse" class="btnContact"
+                            value="Registrarse" />
+                        <span>Ya tienes cuenta? </span><a href="Login.html"
+                            style="color: #9f6cd2;text-decoration: none;"> Ingresa aqui</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        $("#btnRegistrarse").on('click', function () {
+            SaveOrUpdate();
+        });
+    });
+
+    function SaveOrUpdate() {
+        if (validateCampos()) {
+            var isNewVal = $("#guidOrder").text().length == 0 ? true : false;
+            var newid = (isNewVal ? "00000000-0000-0000-0000-000000000000" : $("#guidOrder").text())
+            var formData = {
+                id: newid,
+                nombre: $("#nombre").val(),
+                apellido: $("#apellido").val(),
+                documento: $("#documento").val(),
+                telefono: $("#telefono").val(),
+                direccion: $("#direccion").val(),
+                correo: $("#correo").val(),
+                fechaNacimiento: $("#fechanac").val(),
+                estado: true
+            };
+            $.ajax({
+                type: "POST",
+                url: "https://mediconect.bsite.net/api/MediConnect/GuardarActualizarPacientes",
+                async: true,
+                crossDomain: true,
+                cache: false,
+                contentType: "application/json",
+                data: JSON.stringify(formData),
+                success: function (responseData) {
+                    location.reload();
+                },
+                error: function (err) {
+                    switch (err.status) {
+                        case "400":
+                            alert("Error interno");
+                            break;
+                        case "401":
+                            window.location.href = "Login.html"
+                            break;
+                        case "403":
+                            // forbidden
+                            break;
+                        default:
+                            alert("Error interno")
+                            break;
+                    }
+                }
+            });
+        }
+    }
+    function validateCampos() {
+        var msg = "";
+        if ($("#nombre").val().length == 0)
+            msg += "Debe digitar un nombre. \n"
+        else if ($("#apellido").val().length == 0)
+            msg += "Debe digitar un apellido. \n"
+        else if ($("#documento").val().length == 0)
+            msg += "Debe digitar un documento. \n"
+        else if ($("#telefono").val().length == 0)
+            msg += "Debe digitar un telefono. \n"
+        else if ($("#direccion").val().length == 0)
+            msg += "Debe digitar una dirección. \n"
+        else if ($("#fechanac").val().length == 0)
+            msg += "Debe seleccionar un fecha de nacimiento. \n"
+        else if ($("#correo").val().length == 0)
+            msg += "Debe digitar un correo. \n"
+
+        if (msg.length > 0) {
+            alert(msg);
+            return false;
+        }
+        else
+            return true;
+    }
+</script>
+
+</html>

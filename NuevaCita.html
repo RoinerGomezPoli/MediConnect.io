@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado General</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet" type="text/css" />
+
+    <!-- Plugin file -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="wrapper rounded bg-white">
+        <div class="h3 rowTotal d-flex justify-content-between px-4">
+            <div class="mb-1 text-left">
+                <strong>
+                    <p id="nameU" class="navbar-brand"></p>
+                </strong>
+            </div>
+            <div class="mb-1 text-right">
+                <a href="Home.html" class="text-danger"><span class='btn-label'> <i
+                            class='fa fa-home'></i> </span></a>
+                <a href="Login.html" class="text-secondary"><span class='btn-label'> <i
+                            class='fa fa-sign-out'></i> </span> </a>
+            </div>
+        </div>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="row mt-3">
+                <div class="col-12 table-responsive">
+                    <table id="tblCitas" class="table table-borderless">
+                        <thead>
+                            <caption>Estas son tus citas!</caption>
+                            <tr class="bg-light">
+                                <th class='hide'>id</th>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Medico</th>
+                                <th>Descripción</th>
+                                <th>Accion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        const valL = sessionStorage.getItem("tk");
+        if (valL == null || valL == undefined) {
+            window.location.href = "Login.html"
+            return;
+        }
+        const elem = document.getElementById("nameU")
+        elem.innerHTML = 'Bienvenido, ' + sessionStorage.getItem("nombre");
+        const perfil = sessionStorage.getItem("idperfil").toUpperCase();
+        if (perfil == '19DBFDD5-50CE-4AB4-BCFE-21118FBDE58B') {
+            window.location.href = "Home.html"
+        }
+        LoadCitas();
+        $("#tblCitas").on('click', '.clsAsignar', function () {
+            var currentRow = $(this).closest("tr");
+            var nombre = currentRow.find(".nom").html();
+            if (confirm("Desea asignar cita " + nombre + " ?") == true) {
+                var guid = currentRow.find(".guidtbl").html();
+                AsignarCita(guid)
+            }
+        });
+    });
+
+    function LoadCitas() {
+        var formData = {
+            estadoCita: 1
+        };
+        const tk = 'Bearer ' + sessionStorage.getItem("tk");
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/TraerCita",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            beforeSend: function (request) {
+                request.withCredentials = true;
+                request.setRequestHeader("Authorization", tk);
+            },
+            success: function (data) {
+                $.each(data, function (i, item) {
+                    const date = new Date(item.fecha);
+                    const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+                    var row = "<tr>" +
+                        "<td class='hide guidtbl'>" + item.id + "</td>" +
+                        "<td class='nom'>" + item.nombre + "</td>" +
+                        "<td>" + formattedDate + "</td>" +
+                        "<td>" + item.hora + "</td>" +
+                        "<td>" + item.medico + "</td>" +
+                        "<td>" + item.descripcion + "</td>" +
+                        "<td><button class='btn btnTable btn-labeled text-primary clsAsignar' data-toggle='tooltip' data-placement='top' title='Asignar cita'><span class='btn-label'> <i class='fa fa-calendar'></i> </span></button></td>";
+                    $("#tblCitas>tbody").append(row);
+                });
+                const tb = $('#tblCitas > tbody');
+                if (tb.length > 1) {
+                    tb[1].remove();
+                }
+
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        //Something bad happened
+                        break;
+                }
+            }
+        });
+    }
+    function AsignarCita(guidVal) {
+        var formData = {
+            id: guidVal,
+            estadoCita: 2,
+            pacienteId: sessionStorage.getItem("id")
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/GuardarActualizarCita",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            success: function (responseData) {
+                if (responseData > 0) {
+                    location.reload();
+                } else {
+                    alert("No se pudo guardar información")
+                }
+            },
+            failure: function (responseData) {
+                alert(responseData.responseText);
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Ha ocurrido un error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        alert("Ha ocurrido un error interno");
+                        break;
+                }
+            }
+        });
+    }
+</script>
+
+</html>

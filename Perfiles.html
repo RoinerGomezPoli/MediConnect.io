@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de perfiles</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.3/css/bootstrap-select.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link href="../css/style.css" rel="stylesheet" type="text/css" />
+
+    <!-- Plugin file -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
+</head>
+
+<body>
+    <div class="wrapper rounded bg-white ">
+        <div class="h3 rowTotal d-flex justify-content-between px-4">
+            <div class="mb-1 text-left">
+                REGISTRO DE PERFILES
+            </div>
+            <div class="mb-1 text-right">
+                <button class="btn text-primary" id="btnGuardar"><span class='btn-label'> <i class='fa fa-2x fa-cart-plus'></i>
+                    </span></button>
+                <a href="Home.html" class="text-danger"><span class='btn-label'> <i class='fa fa-home'></i> </span></a>
+            </div>
+        </div>
+        <div class="form">
+            <span id="guidPer" class="hide"></span>
+            <div class="row">
+                <div class="col-md-3 mt-md-0 mt-3">
+                    <label>Nombre</label>
+                    <input type="text" class="form-control" required id="Nombre" maxlength="50">
+                </div>
+                <div class="col-md-3 mt-md-0 mt-3">
+                    <label>Estado</label>
+                    <input type="checkbox" required id="Estado">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 table-responsive">
+                    <table id="tblPerfiles" class="table table-borderless table-hover">
+                        <thead>
+                            <tr class="bg-light">
+                                <th class='hide'>id</th>
+                                <th>Nombre</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        const valL = sessionStorage.getItem("tk");
+        if (valL == null || valL == undefined) {
+            window.location.href = "Login.html"
+            return;
+        }
+        const perfil = sessionStorage.getItem("idperfil").toUpperCase();
+        if (perfil == '37058450-91CE-46D2-B090-DECC916293CC') {
+            window.location.href = "Home.html"
+        }
+        LoadPerfiles();
+        $("#tblPerfiles").on('click', '.clsEdit', function () {
+            var currentRow = $(this).closest("tr");
+            var guid = currentRow.find(".guidtbl").html();
+            EditPerfil(guid)
+        });
+        $("#btnGuardar").on('click', function () {
+            SaveOrUpdate();
+        });
+    });
+
+    function LoadPerfiles() {
+        var formData = {
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/TraerPerfiles",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            success: function (data) {
+                $.each(data, function (i, item) {
+                    const estado = item.estado == true ? "Activo" : "Inactivo";
+                    var row = "<tr>" +
+                        "<td class='hide guidtbl'>" + item.id + "</td>" +
+                        "<td class='nom'>" + item.nombre + "</td>" +
+                        "<td>" + estado + "</td>" +
+                        "<td><button class='btn btnTable btn-labeled text-primary clsEdit' data-toggle='tooltip' data-placement='top' title='Editar'><span class='btn-label'> <i class='fa fa-edit'></i> </span></button></td>" ;
+
+                    $("#tblPerfiles>tbody").append(row);
+                });
+            },
+        });
+    }
+    function EditPerfil(guidVal) {
+        var formData = {
+            id: guidVal,
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/TraerPerfiles",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (responseData) {
+                $("#guidPer").text(responseData[0].id)
+                $("#Nombre").val(responseData[0].nombre)
+                $('#Estado').prop('checked', responseData[0].estado);
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        //Something bad happened
+                        break;
+                }
+            }
+        });
+    }
+    function SaveOrUpdate() {
+        if ($("#Nombre").val() == '') {
+            alert("Digite un perfil")
+            return;
+        }
+        var isNewVal = $("#guidPer").text().length == 0 ? true : false;
+        var newid = (isNewVal ? "00000000-0000-0000-0000-000000000000" : $("#guidPer").text())
+        let estado;
+
+        if ($('#Estado').is(":checked")) {
+            estado = true;
+        } else {
+            estado = false;
+        }
+        var formData = {
+            id: newid,
+            nombre: $("#Nombre").val(),
+            estado: Boolean(estado),
+            medicoId: sessionStorage.getItem("id")
+        };
+        $.ajax({
+            type: "POST",
+            url: "https://mediconect.bsite.net/api/MediConnect/GuardarActualizarPerfil",
+            async: true,
+            crossDomain: true,
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(formData),
+            success: function (responseData) {
+                location.reload();
+            },
+            error: function (err) {
+                switch (err.status) {
+                    case "400":
+                        alert("Error interno");
+                        break;
+                    case "401":
+                        window.location.href = "Login.html"
+                        break;
+                    case "403":
+                        // forbidden
+                        break;
+                    default:
+                        alert("Ha ocurirod un error interno")
+                        break;
+                }
+            }
+        });
+    }
+
+
+</script>
+
+</html>
